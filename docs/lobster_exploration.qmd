@@ -1,0 +1,159 @@
+---
+title: "Lobster Exploration"
+author: "Tom Gibbens-Matsuyama"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+
+## Task 2
+
+## Read in Data and Load Libraries
+
+```{r}
+library(tidyverse)
+library(here)
+library(dplyr)
+library(janitor)
+
+lobster_data <- read_csv(here("data", "Lobster_Abundance_All_Years_20210412.csv"),
+                         na = c("-99999", "")) %>% 
+  clean_names() %>% 
+  uncount(count)
+
+# The uncount function eliminates the count column   
+
+lobster_fake <- lobster_data <- read_csv(here("data", "Lobster_Abundance_All_Years_20210412.csv"),
+                         na = c("-99999", ""))
+
+# Did na = c(-99999) because this value meant missing data in the dataframe
+  
+```
+
+```{r}
+lobster_carapace <- lobster_data %>% 
+  group_by(year, site) %>% 
+  summarize(total_length = sum(size_mm), count = n())
+
+lobster_plot1 <- ggplot(lobster_carapace, aes(x = year, y = total_length, color = site)) +
+  geom_point()
+
+lobster_plot2 <- lobster_plot1 + 
+  facet_wrap(vars(site), nrow = 2)
+```
+
+## Creating a subset that only contains lobster data from 2020
+
+```{r}
+lobster_2020 <- lobster_data %>% 
+  filter(year == "2020") %>% 
+  mutate(legal = case_when(size_mm >= 79.76 ~ "Yes",
+                           size_mm < 79.76 ~ "No")) %>% 
+  group_by(site, legal) %>% 
+  summarize(count = n())
+
+## We want to find the counts of lobsters observed at each site
+
+## Create a ggplot
+
+ggplot(lobster_2020, aes(x = site, y = count, fill = legal)) +
+  geom_col(position = "fill")
+
+## CARP and MOHK had the highest amount of illegal lobsters caught. 
+```
+
+## Task 3 
+
+
+# Filter Practice
+
+```{r}
+## filter data so that we only have sites IVEE, CARP, and NAPL
+
+#a
+
+lobster_3 <- lobster_data %>% 
+  filter(site == c("IVEE", "CARP", "NAPL"))
+
+#b
+
+lobster_aug <- lobster_data %>% 
+  filter(month == 8)
+
+#c
+
+lobster_AQUE_70 <- lobster_data %>% 
+  filter(site == "AQUE" | size_mm >= 70)
+
+#d
+
+lobster_no_napl <- lobster_data %>% 
+  filter(site != c("NAPL"))
+```
+
+# Group_by and Summarize practice
+
+```{r}
+#e
+
+lobster_mean_sd <- lobster_data %>% 
+  group_by(site) %>% 
+  summarize(mean_carapace = mean(size_mm, na.rm = TRUE), std_carapace = sd(size_mm, na.rm = TRUE))
+
+#f
+
+lobster_max <- lobster_data %>% 
+  group_by(site, month) %>% 
+  summarize(max_length = max(size_mm, na.rm = TRUE))
+```
+
+# Mutate Function
+
+```{r}
+
+#g
+
+lobster_cm <- lobster_data %>% 
+  mutate(length_cm = size_mm * 10)
+
+#h
+
+lobster_lc_site <- lobster_data %>% 
+  mutate(site = tolower(site))
+
+#i
+
+lobster_char <- lobster_data %>% 
+  mutate(area = as.character(area))
+
+class(lobster_char$area)
+
+```
+
+# case_when function
+
+```{r}
+
+#j
+
+lobster_size_bin <- lobster_data %>% 
+  mutate(size_bin = case_when(size_mm <= 70 ~ "small",
+                              size_mm > 70 ~ "large"))
+
+#k
+
+lobster_des <- lobster_data %>% 
+  mutate(designation = case_when(site == "IVEE" ~ "MPA",
+                                 site == "NAPL" ~ "MPA",
+                                 site == "AQUE" ~ "NOT MPA",
+                                 site == "CARP" ~ "NOT MPA",
+                                 site == "MOHK" ~ "NOT MPA"))
+
+lobster_des2 <- lobster_data %>% 
+  mutate(designation = case_when(site == c("IVEE", "NAPL") ~ "MPA",
+                                 site != c("IVEE", "NAPL") ~ "NOT MPA"))
+  
+```
+
